@@ -44,6 +44,7 @@ TARGET_NAMESPACE=${TARGET_NAMESPACE:-openshift-storage}
 ADDON_NAME=${ADDON_NAME:-ocs-converged}
 BUNDLE_FILE=${OUTPUT_DIR}/manifests/ocs-osd-deployer.clusterserviceversion.yaml
 CLUSTER_SIZE=${CLUSTER_SIZE:-1}
+ENABLE_MCG_FLAG=${ENABLE_MCG_FLAG:-false}
 
 # Generate the deployer image 
 blue "Generate deployer image: ${DEPLOYER_IMAGE}"
@@ -79,7 +80,7 @@ blue "Creating catalogsource containing needed dependencies on cluster"
 exit_on_err ${K8S_CLIENT} -n ${TARGET_NAMESPACE} apply -f ./tools/yamls/ocs-catalogsource.yaml
 
 blue "Creating secrets needed for the operator to run without error"
-exit_on_err ${K8S_CLIENT} -n ${TARGET_NAMESPACE} create secret generic addon-${ADDON_NAME}-parameters --from-literal=size=${CLUSTER_SIZE} --dry-run=client -o yaml | ${K8S_CLIENT} -n ${TARGET_NAMESPACE} apply -f -
+exit_on_err ${K8S_CLIENT} -n ${TARGET_NAMESPACE} create secret generic addon-${ADDON_NAME}-parameters --from-literal=size=${CLUSTER_SIZE} --from-literal=enable-mcg=${ENABLE_MCG_FLAG} --dry-run=client -o yaml | ${K8S_CLIENT} -n ${TARGET_NAMESPACE} apply -f -
 exit_on_err ${K8S_CLIENT} -n ${TARGET_NAMESPACE} create secret generic ${ADDON_NAME}-pagerduty --from-literal=PAGERDUTY_KEY=${PD_KEY} --dry-run=client -o yaml | ${K8S_CLIENT} -n ${TARGET_NAMESPACE} apply -f -
 exit_on_err ${K8S_CLIENT} -n ${TARGET_NAMESPACE} create secret generic ${ADDON_NAME}-deadmanssnitch --from-literal=SNITCH_URL=${SNITCH_URL} --dry-run=client -o yaml | ${K8S_CLIENT} -n ${TARGET_NAMESPACE} apply -f -
 

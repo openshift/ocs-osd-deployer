@@ -63,6 +63,7 @@ const (
 	alertmanagerConfigName                 = "managed-ocs-alertmanager-config"
 	dmsRuleName                            = "dms-monitor-rule"
 	storageClassSizeKey                    = "size"
+	enableMCGKey                           = "enable-mcg"
 	deviceSetName                          = "default"
 	storageClassRbdName                    = "ocs-storagecluster-ceph-rbd"
 	storageClassCephFSName                 = "ocs-storagecluster-cephfs"
@@ -567,7 +568,8 @@ func (r *ManagedOCSReconciler) updateStorageClusterFromAddonParamsSecret(sc *ocs
 	addonParams := addonParamSecret.Data
 
 	sizeAsString := string(addonParams[storageClassSizeKey])
-	r.Log.Info("Requested add-on settings", storageClassSizeKey, sizeAsString)
+	enableMCGAsString := string(addonParams[enableMCGKey])
+	r.Log.Info("Requested add-on settings", storageClassSizeKey, sizeAsString, enableMCGKey, enableMCGAsString)
 	desiredDeviceSetCount, err := strconv.Atoi(sizeAsString)
 	if err != nil {
 		return fmt.Errorf("Invalid storage cluster size value: %v", sizeAsString)
@@ -602,6 +604,17 @@ func (r *ManagedOCSReconciler) updateStorageClusterFromAddonParamsSecret(sc *ocs
 	} else {
 		r.Log.V(-1).Info("Requested storage device set count will result in downscaling, which is not supported. Skipping")
 		ds.Count = currDeviceSetCount
+	}
+	// Check and enable MCG in Storage Cluster spec
+	mcgEnable, err := strconv.ParseBool(enableMCGAsString)
+	if err != nil {
+		return fmt.Errorf("Invalid Enable MCG value: %v", enableMCGAsString)
+	}
+	if mcgEnable {
+		r.Log.Info("Enabling Multi Cloud Gateway")
+		sc.Spec.MultiCloudGateway.ReconcileStrategy = "manage"
+	} else if sc.Spec.MultiCloudGateway.ReconcileStrategy == "manage" {
+		r.Log.V(-1).Info("Trying to disable Multi Cloud Gateway, Invalid operation")
 	}
 
 	return nil
