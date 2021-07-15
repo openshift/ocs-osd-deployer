@@ -439,6 +439,7 @@ var _ = Describe("ManagedOCS controller", func() {
 				// Create a valid add-on parameters secret
 				secret := addonParamsSecretTemplate.DeepCopy()
 				secret.Data["size"] = []byte("1")
+				secret.Data["enable-mcg"] = []byte("false")
 				Expect(k8sClient.Create(ctx, secret)).Should(Succeed())
 
 				By("Creating a storagecluster resource")
@@ -484,6 +485,7 @@ var _ = Describe("ManagedOCS controller", func() {
 			It("should increase storagecluster's storage device set count", func() {
 				secret := addonParamsSecretTemplate.DeepCopy()
 				secret.Data["size"] = []byte("4")
+				secret.Data["enable-mcg"] = []byte("false")
 				Expect(k8sClient.Update(ctx, secret)).Should(Succeed())
 
 				// wait for the storagecluster to update
@@ -511,6 +513,7 @@ var _ = Describe("ManagedOCS controller", func() {
 			It("should not decrease storagecluster's storage device set count", func() {
 				secret := addonParamsSecretTemplate.DeepCopy()
 				secret.Data["size"] = []byte("1")
+				secret.Data["enable-mcg"] = []byte("false")
 				Expect(k8sClient.Update(ctx, secret)).Should(Succeed())
 
 				Consistently(func() bool {
